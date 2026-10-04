@@ -1,226 +1,177 @@
 import './style.css'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import gsap from 'gsap'
-import * as dat from 'dat.gui'
 
-// Debug
-const gui = new dat.GUI()
-
-// Canvas
 const canvas = document.querySelector('canvas.webgl')
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-// Scene
 const scene = new THREE.Scene()
 
-// Material
-const material = new THREE.MeshToonMaterial({ color: '#ffeded' });
+const material = new THREE.MeshToonMaterial({ color: '#f7f7f2' })
+const accentMaterial = new THREE.MeshToonMaterial({ color: '#ff991c' })
+const cobaltMaterial = new THREE.MeshToonMaterial({ color: '#91a7ff' })
 
-
-/**
- * Objects
- */
-// Meshes
 const mesh1 = new THREE.Mesh(
-    new THREE.TorusGeometry(1, 0.4, 16, 60),
-    material
+  new THREE.TorusGeometry(1, 0.35, 24, 80),
+  cobaltMaterial
 )
-// mesh1.scale.set(0.5, 0.5, 0.5)
-
 const mesh2 = new THREE.Mesh(
-    new THREE.ConeGeometry(1, 2, 32),
-    material
+  new THREE.ConeGeometry(1, 2, 48),
+  material
 )
-// mesh2.scale.set(0.5, 0.5, 0.5)
-
 const mesh3 = new THREE.Mesh(
-    new THREE.TorusKnotGeometry(0.8, 0.35, 100, 16),
-    material
+  new THREE.TorusKnotGeometry(0.78, 0.26, 120, 20),
+  accentMaterial
 )
-// mesh3.scale.set(0.5, 0.5, 0.5)
 
-scene.add(mesh1, mesh2, mesh3);
+const objectsDistance = 4
+mesh1.position.set(2.25, -objectsDistance * 0, 0)
+mesh2.position.set(-2.15, -objectsDistance * 1, 0)
+mesh3.position.set(2.15, -objectsDistance * 2, 0)
 
-const objectsDistance = 4;
-mesh1.position.x = 2
-mesh2.position.x = - 2
-mesh3.position.x = 2
-mesh1.position.y = - objectsDistance * 0
-mesh2.position.y = - objectsDistance * 1
-mesh3.position.y = - objectsDistance * 2
+const sectionMeshes = [mesh1, mesh2, mesh3]
+scene.add(...sectionMeshes)
 
-
-const sectionMeshes = [ mesh1, mesh2, mesh3 ];
-
-/**
- * Particles
- */
-// Geometry
-const particlesCount = 200
+const particlesCount = 260
 const positions = new Float32Array(particlesCount * 3)
 
-for(let i = 0; i < particlesCount; i++)
-{
-    positions[i * 3 + 0] = (Math.random() - 0.5) * 10
-    positions[i * 3 + 1] = objectsDistance * 0.5 - Math.random() * objectsDistance * sectionMeshes.length
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 10
+for (let index = 0; index < particlesCount; index += 1) {
+  positions[index * 3] = (Math.random() - 0.5) * 10
+  positions[index * 3 + 1] =
+    objectsDistance * 0.5 - Math.random() * objectsDistance * sectionMeshes.length
+  positions[index * 3 + 2] = (Math.random() - 0.5) * 10
 }
 
 const particlesGeometry = new THREE.BufferGeometry()
-particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+particlesGeometry.setAttribute(
+  'position',
+  new THREE.BufferAttribute(positions, 3)
+)
 
-// Material
-const particlesMaterial = new THREE.PointsMaterial({
-    color: '#ffeded',
+const particles = new THREE.Points(
+  particlesGeometry,
+  new THREE.PointsMaterial({
+    color: '#91a7ff',
     sizeAttenuation: true,
-    size: 0.03
-})
-
-// Points
-const particles = new THREE.Points(particlesGeometry, particlesMaterial)
+    size: 0.035,
+    transparent: true,
+    opacity: 0.7,
+  })
+)
 scene.add(particles)
 
-/**
- * Lights
- */
- const directionalLight = new THREE.DirectionalLight('#ffffff', 1)
- directionalLight.position.set(1, 1, 0)
- scene.add(directionalLight)
+const directionalLight = new THREE.DirectionalLight('#ffffff', 1.6)
+directionalLight.position.set(1, 1, 2)
+scene.add(directionalLight)
 
-/**
- * Sizes
- */
+const orangeLight = new THREE.PointLight('#ff991c', 1.2, 14)
+orangeLight.position.set(-2, 1, 3)
+scene.add(orangeLight)
+
 const sizes = {
-    width: window.innerWidth,
-    height: window.innerHeight
+  width: window.innerWidth,
+  height: window.innerHeight,
 }
 
-window.addEventListener('resize', () =>
-{
-    // Update sizes
-    sizes.width = window.innerWidth
-    sizes.height = window.innerHeight
-
-    // Update camera
-    camera.aspect = sizes.width / sizes.height
-    camera.updateProjectionMatrix()
-
-    // Update renderer
-    renderer.setClearAlpha(0);
-    renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-})
-
-/**
- * Camera
- */
-// Group
 const cameraGroup = new THREE.Group()
 scene.add(cameraGroup)
 
-// Base camera
-const camera = new THREE.PerspectiveCamera(35, sizes.width / sizes.height, 0.1, 100)
+const camera = new THREE.PerspectiveCamera(
+  35,
+  sizes.width / sizes.height,
+  0.1,
+  100
+)
 camera.position.z = 6
 cameraGroup.add(camera)
 
-// Controls
-// const controls = new OrbitControls(camera, canvas)
-// controls.enableDamping = true
-
-/**
- * Renderer
- */
 const renderer = new THREE.WebGLRenderer({
-    canvas: canvas,
-    alpha: true,
+  canvas,
+  alpha: true,
+  antialias: true,
+  powerPreference: 'high-performance',
 })
-renderer.setClearAlpha(0)
+renderer.setClearColor(0x05070b, 1)
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
-/**
- * Scroll
- */
- let scrollY = window.scrollY
- let currentSection = 0
- 
- window.addEventListener('scroll', () =>
- {
-     scrollY = window.scrollY
-     const newSection = Math.round(scrollY / sizes.height)
-     if(newSection != currentSection)
-     {
-         currentSection = newSection
- 
-        //  console.log('changed', currentSection)
-        gsap.to(
-            sectionMeshes[currentSection].rotation,
-            {
-                duration: 1.5,
-                ease: 'power2.inOut',
-                x: '+=6',
-                y: '+=3'
-            }
-        )
-     }
-    //  console.log(newSection)
-    //  console.log(scrollY)
- })
+window.addEventListener('resize', () => {
+  sizes.width = window.innerWidth
+  sizes.height = window.innerHeight
 
-/**
- * Cursor
- */
- const cursor = {}
- cursor.x = 0
- cursor.y = 0
+  camera.aspect = sizes.width / sizes.height
+  camera.updateProjectionMatrix()
 
- window.addEventListener('mousemove', (event) =>
-{
-    cursor.x = event.clientX / sizes.width - 0.5
-    cursor.y = event.clientY / sizes.height - 0.5
-
-    // console.log(cursor)
+  renderer.setSize(sizes.width, sizes.height)
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
 
-/**
- * Animate
- */
+let scrollY = window.scrollY
+let currentSection = 0
+
+window.addEventListener(
+  'scroll',
+  () => {
+    scrollY = window.scrollY
+    const nextSection = Math.min(
+      sectionMeshes.length - 1,
+      Math.max(0, Math.round(scrollY / sizes.height))
+    )
+
+    if (nextSection !== currentSection) {
+      currentSection = nextSection
+
+      if (!prefersReducedMotion) {
+        gsap.to(sectionMeshes[currentSection].rotation, {
+          duration: 1.25,
+          ease: 'power2.inOut',
+          x: '+=5',
+          y: '+=2.5',
+        })
+      }
+    }
+  },
+  { passive: true }
+)
+
+const cursor = { x: 0, y: 0 }
+
+window.addEventListener(
+  'pointermove',
+  (event) => {
+    cursor.x = event.clientX / sizes.width - 0.5
+    cursor.y = event.clientY / sizes.height - 0.5
+  },
+  { passive: true }
+)
 
 const clock = new THREE.Clock()
 let previousTime = 0
 
-const tick = () =>
-{
+function tick() {
+  const elapsedTime = clock.getElapsedTime()
+  const deltaTime = elapsedTime - previousTime
+  previousTime = elapsedTime
 
-    const elapsedTime = clock.getElapsedTime()
-    const deltaTime = elapsedTime - previousTime
-    previousTime = elapsedTime
+  if (!prefersReducedMotion) {
+    sectionMeshes.forEach((mesh, index) => {
+      mesh.rotation.x += deltaTime * (0.08 + index * 0.025)
+      mesh.rotation.y += deltaTime * (0.11 + index * 0.02)
+    })
+  }
 
+  camera.position.y = (-scrollY / sizes.height) * objectsDistance
 
-    // Update objects
-    // Animate meshes
-    for(const mesh of sectionMeshes)
-    {
-        mesh.rotation.x += deltaTime * 0.1
-        mesh.rotation.y += deltaTime * 0.12
-    }
+  const parallaxX = cursor.x * 0.5
+  const parallaxY = -cursor.y * 0.5
 
-     // Animate camera
-    camera.position.y = - scrollY / sizes.height * objectsDistance
+  cameraGroup.position.x +=
+    (parallaxX - cameraGroup.position.x) * 5 * deltaTime
+  cameraGroup.position.y +=
+    (parallaxY - cameraGroup.position.y) * 5 * deltaTime
 
-    const parallaxX = cursor.x * 0.5
-    const parallaxY = - cursor.y * 0.5
-    
-      cameraGroup.position.x += (parallaxX - cameraGroup.position.x) * 5 * deltaTime
-    cameraGroup.position.y += (parallaxY - cameraGroup.position.y) * 5 * deltaTime
-    // Update Orbital Controls
-    // controls.update()
-
-    // Render
-    renderer.render(scene, camera)
-
-    // Call tick again on the next frame
-    window.requestAnimationFrame(tick)
+  renderer.render(scene, camera)
+  requestAnimationFrame(tick)
 }
 
 tick()
